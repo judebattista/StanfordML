@@ -1,0 +1,61 @@
+Gradient Descent - minimize the cost function
+Will be more general than just linear regression
+For now we will limit ourselves to two params
+1.  Start with some Θ0 and Θ1 (say, 0 and 0 perhaps)
+2.  Keep changing them until we wind up at a minimum (hopefully global)
+
+What direction takes us downhill the most quickly?
+    Step
+    Loop
+Even small changes in starting conditions can lead to totally different optima
+
+Algorithm:
+    Repeat until convergence:
+        Θj := Θj - α * δ/δθj * J(Θ0, Θ1) for j = 0 and j = 1
+
+Correct: Simultaneous update:
+    temp0 := Θ0 - α * δ/δθ0 * J(Θ0, Θ1)
+    temp1 := Θ1 - α * δ/δθ1 * J(Θ0, Θ1)
+    Θ0 := temp0
+    Θ1 := temp1
+
+Incorrect: Sequential update:
+    temp0 := Θ0 - α * δ/δθ0 * J(Θ0, Θ1)
+    Θ0 := temp0
+    temp1 := Θ1 - α * δ/δθ1 * J(Θ0, Θ1)
+    Θ1 := temp1
+
+Notation Notes: 
+    := is the assignment operator, = is the equality asssertion operator
+    α is the learning rate, the size of the step we take downhill
+
+Simplification: imagine a function of just one parameter J(Θ1) where Θ1 is a real number
+   Then our update step is Θ1 := Θ1 - α * δ/δΘ1 J(Θ1)
+       Which, since J is a function of a single variable is Θ1 := Θ1 - α * d/dΘ1 J(Θ1)
+    Since J is a function of a single parameter, it is parabolic, so the derivative leads us towards the minimum
+    Poor choices of α can either take too long to converge or can skip over the minimum and lead to backtracking
+        Can even be infinite if it gets stuck on equidistant points from the minimum or it may even diverge
+    Because the derivative approaches 0 as we approach the minimum, the overall steps we take also get smaller
+
+Going back to our linear regression cost function J(θ0, θ1) = 1/2m Σ(h(xi) - yi)²
+    h(x) = θ0 + θ1*x
+Then δ/δθi J(θ0, θ1) = 1/2m Σ 2(h(xi) - yi) * h'(xi)
+    so δ/δθ0 J  = 1/2m Σ 2(θ0 + θ1*xi - yi) * 1
+                = 1/m Σ (θ0 + θ1*xi - yi)
+                = 1/m Σ (h(xi) - yi) 
+
+    and δ/δθ1 J = 1/2m Σ 2(θ0 + θ1*x  - yi) * xi
+                = 1/m Σ (θ0 + θ1*xi  - yi) * xi
+                = 1/m Σ (h(xi) - yi) * xi
+
+Our algorithm then becomes:
+(Don't forget to update values simultaneously!)
+Repeat until convergence: {
+    θ0 := θ0 - α * 1/m Σ (h(xi) - yi)
+    θ1 := θ1 - α * 1/m Σ (h(xi) - yi)  * xi
+}
+
+It turns out that the cost function for a linear model is always bowl shaped, that is it is a "Convex function"
+This is great! Our algorithm will always find the global optimum since there are no local optima
+This algorithm is called a "Batch Gradient Descent" because each step uses all the training examples
+

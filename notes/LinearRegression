@@ -1,0 +1,34 @@
+m = number of training examples
+x = input variable or feature
+y = output variable or feature
+
+(x, y) is a single training example
+(x(i), y(i)) is the ith training example, not a power
+
+Training set →  Learning algorithm → h(x) which is the hypothesis function. Given an x, it predicts a y
+    h: X → Y where X is the input space and Y the output space
+
+h(x) is a linear combination of coefficients Theta times powers of x (powers are 0, 1 for linear)
+
+Univariate linear regression - LR with one variable
+
+We want to minimize over Θ1 * Θ2
+    Sum the (predicted value - the actual value) squared
+Our cost function is 1/2m times the sum of the squares of the predicted value minus the actual value
+    (For a given set of thetas)
+
+This is the squared error cost function, which tends to be our default for linear regression problems
+
+hypothesis:     h(x) = Θ0 + Θ1*x
+parameters:     Θ0, Θ1
+Cost function:  J(Θ0, Θ1) = 1/2m Σ (h(xi) - yi) for i = 0 to m
+Goal:           minimize J(Θ0, Θ1)
+
+With two parameters, our cost functions are represented by a three dimensional parabolic figure
+We will use contour plots to represent them instead
+    2-D representation
+    Uses Θ0 and Θ1 as the axis
+    Displays a series of ovals where the cost function takes on the same value - can use color to denote values
+
+
+
