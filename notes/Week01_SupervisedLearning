@@ -1,0 +1,23 @@
+Supervised Learning - the algorithm was fed a dataset with the "right answers"
+    The algorithm then tries to predict the price of a house with an arbitrary number of square feet
+This is a regression problem: Predict continuous valued output
+
+Tumor example - discrete values, either benign or malignant
+This is a classification problem: discrete valued output. May be more than just two outputs
+
+
+We may have a large number of features:
+    Age, Tumor Size, Clump Thickness, Uniformity of Cell Size, Uniformity of Cell Shape
+We want to be able to handle an infinite number of attributes. 
+    How do we store an infinite number of things?
+    Support Vector Machines offer a neat mathematical trick    
+    
+Problem 1: You have a large inventory of identical items, you want to predict how many of these items will sell over the next three months
+    Regression - continuous over N
+
+Problem 2: You'd like software to examine individual customer accounts and for each account decide if it has been hacked/compromised
+    Classification - discrete binary states
+
+Correct
+
+
