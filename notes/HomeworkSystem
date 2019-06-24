@@ -1,0 +1,5 @@
+In octave we can execute a script with 
+    ScriptName()
+
+And execute the submission scriptt with
+    Submit()

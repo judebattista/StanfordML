@@ -1,0 +1,181 @@
+Semicolon suppresses output
+disp(var) handles more complex output
+disp(sprintf('2 decimals: %0.2f', a))
+    prints a as a float with two decimals
+disp(sprintf('2 decimals: %0.6f', a))
+    priants a to six decimals
+format long defaults to more decimal places
+
+Matrix notation:
+    A = [1 2; 3 4; 5 6]
+
+    v = [1 2 3] or [1;2;3] for row vs col vectors
+
+    v = 1:0.1:2 creates elements starting with 1 and going to 2 in steps of 0.1
+
+    ones(2, 3) generates 2x3 matrix of ones
+    2*ones(2,3) generates 2x3 matrix of twos
+    zeros(2,3) generates 2x3 matrix of zeroes
+    rand(2,3) generates 2x3 matrix of random values
+    randn(2,3) uses gaussian random values
+
+Given a variable w = -6 sqrt(10)*randn(1,10000) we can use
+    hist(w) to plot the distribution
+eye(3) generates I₃
+help rand gives you help on the rand function
+
+Moving data around:
+for A = [1 2;3 4; 5 6] and v [1 2 3 4]
+size(A) = [3, 2]
+size(A, 1) = 3
+size(A, 2) = 2
+length(v) = 4
+
+Just like linux, pwd shows current directory, cd changes it, ls shows content
+
+To load a file use load('filename', varname)
+to store a range, we can use:
+    y = v(1:10) to take the first ten values from v
+save filename varname stores the variable in a compressed binary format
+save filename varname -ascii to save in human readable format
+
+clear - dumps ALL variables in workspace!
+clear varname deletes a variable
+
+: indicates ever element along that row or column:\
+A(:, 2) gets everything in the second column of A
+A([1, 3], :) means get everything from rows 1 or 3
+A (:, 2) = [10;11;12] replaces the second col in A
+A = [A, [10;11;12]] appends the col vector to A
+A(:) puts all elements of A into a single vector
+
+Say B = [11 12;13 14;15 16]
+Then C = [A B] or C = [A, B] concatenates them side by side
+C = [A;B] concatenates B below A
+
+Computing on Data:
+With A, B as above and C = [1 1;2 2] then we can use A*C to multiply A through C
+A .* B does element-wise product of A and B
+Similarly A .^ B does element-wise exponentiation
+1 ./ A takes the inverse of the elements of A
+can use exp(A), log(A), abs(A)
+
+We use pinv to invert a matrix
+
+Plotting data in Octave:
+t = [0:0.01:1];
+y1 = sin(2*pi*4*t);
+plot(t, y1)             % plot sin vs time
+y2 = cos(2*pi*4*t);
+hold on;                % save current plot
+plot(t, y2)             % plot sin vs time and cos vs time
+xlabel('time')
+ylabel('value')
+legend('sin', 'cos')
+title('my plot')
+print -dpng 'myPlot.png'    % make sure you cd to your save directory if necessary
+figure(1); plot(t, y1);
+figure(2); plot(t, y2);
+subplot(1,2,1); % divides plot into a 1x2 grid, access first element
+plot(t, y1);
+subplot(1, 2, 2);
+plot(t, y2);
+axis([0.5 1 -1 1])
+clf;                    % clear figure
+
+imagesc(A)              % color plot
+imagesc(A), colorbar, colormap gray;    % greyscale plot, chains three commandsi
+
+Control statements in Octave:
+v = zeros(10, 1)
+
+% For loops
+for i=1:10,
+    v(i) = 2^i;
+end;
+indices = 1:10;
+for i = indices,
+    disp(i);
+end;
+
+% While loops
+i = 1;
+while i <= 5,
+    v(i) = 100;
+    i = i+1;
+end;
+
+
+i = 1;
+while true,
+    v(i) = 999;
+    i = i + i;
+    if i == 6,
+        break;
+    end;
+end;
+
+
+v(1) = 2;
+if v(1) == 1,
+    disp('The value is one');
+elseif v(1) == 2,
+    displ('The value is two');
+else
+    disp('The value is neither one nor two')
+end;
+
+we can create functions, which can be stored in files
+Octave will check its current directory for such files
+% fcn with one parameter and a single return value
+function y = squareThisNumber(x)
+
+y = x^2
+
+Can update Octave's search path by useing addpath('path to files')
+
+function [y1, y2] = squareAndCubeThisNumber(x)
+
+y1 = x^2
+y2 = x^3
+
+[a, b] = squareAndCubeThisNumber(5)
+a = 25
+b = 125
+
+We can use functions to define a costFunctionJ(X, y, theta)
+function J = costFunctionJ(X, y, theta)
+% X is the design matrix containing our training examples
+% y is the class labels
+
+m = size(X, 1);         % number of training examples
+predictions = X*theta   % predictions of hypothesis on all m examples
+sqrErrors = (predictions-y).^2; % squared errors
+J = 1/(2*m) * sum(sqrErrors);
+
+x = [1 1; 1 2; 1 3]
+y = [1; 2; 3]
+theta = [0;1];
+j = costFunction(x, y, theta)
+
+Vectorization in Octave
+If we use optimized libraries, our code will be faster
+Naive implementation of h(x) = θ'x:
+    prediction = 0.0
+    for j = 1:n+1,
+        prediction += theta[j] * x[j] 
+    end;
+
+Will be outperformed by:
+    prediction = theta' * x;
+which lets Octave optimize the transpose and multiplication functions
+
+For gradient descent:
+θⱼ := θⱼ- α/m ⋅ Σ(h(xᵢ) - yᵢ)xᵢⱼ
+
+θ := θ - αδ where δ is our function above
+    θ is an n+1 vector
+    α is a scalar
+    δ is an n+1 vector
+
+

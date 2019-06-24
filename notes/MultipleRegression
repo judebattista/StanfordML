@@ -1,0 +1,65 @@
+n = number of features
+xi = input (features) of ith training example
+xi(j) = value of feature j in ith training example
+
+Previously our hypothesis was h(x) = Θ0 + Θ1x
+Now we will use something like h(x) = Θ0 + Θ1x1 + Θ2x2 + Θ3x3 + ...
+    For convenience of notation, let x0 = 1
+    x = [x₀, x₁, ..., xₙ] 
+    Θ = [Θ₀, Θ₁, ... , Θₙ]
+    
+    Then h(x) = <Θ(trans)|x> or θt ⋅ x
+
+"Multivariate linear regression"
+
+Gradiant Descent:
+θ is an n+1 dimensional vector
+Cost function: = J(θ) = 1/2m 
+
+Gradient Descent repeats the update of θ
+    θⱼ := θⱼ - α/m Σ(h(x(i)) - y(i)  )xⱼ(i)
+
+Feature Scaling: 
+    Make sure features are on a similar scale
+    What if we have features like size (0-2000 ft²) and number of bedrooms (1-5)
+        Eliptical countours → makes it easy for gradient descent to skip
+    We can divide each feature by its maximum value, giving us a [0, 1] scale
+    More generally, we want to work in a [-1, 1] range
+        x₀ = 1 so it's ok
+        Features within the same order of magnitude are fine. 0 < xᵢ < 3 would work
+    We may need to multiply a feature to increase its scale as well.
+   
+Mean normalization: xᵢ = (xᵢ - μᵢ)/sᵢ to have approximately 0 mean. (Do not apply to x₀ = 1) 
+    s here is the range (max - min) or the standard deviation
+
+Learning Rate (α):
+    Debugging:
+        Plot J(θ) vs number of iterations. Should get exponential diminishing
+        Should be smooth decrease - no 'bumps' upwards
+        May declare convergence if J(θ) decreases by some minimal amount after a step. Plot is generally more useful than a hard rule
+        If J increases, has peaked waves, or goes parabolic, use a smaller α
+        For a sufficiently small α, EVERY iteration should reduce J
+        When α is too small, we just get slow convergence
+
+    To choose α try ..., .001, .003 ,.01, .03, .1, .3,  1, ...
+        Plot J vs iterations for each α. Choose one just smaller than the largest reasonable value
+
+Features and Polynomial Regression
+    Say we are predicting housing prices with frontage and depth:
+    h(x) = θ₀ + θ₁⋅frontage + θ₂⋅depth where frontage = x₁, depth = x₂
+    We can create hybrid features like x = area = frontage * depth giving us:
+        h(x) = θ₀ + θ₁⋅x
+
+    For polynomial regressions we may wind up with something like
+        h(x) = θ₀ + θ₁⋅x + θ₂⋅x² + θ₃x³ where x is the size of the house
+    Then we can create new features  x₁ = size, x₂ = size², x₃ = size³
+        Thus we can use linear regression to fit the data
+        Note that the new features have massively different scales! Be sure to scale them if using gradient descent
+
+    What if we have data that doesn't go back down, so doesn't fit a quadratic curve, but doesn't fit a cubic curve either?
+        One option is to make x₃ = sqrt(size)
+
+
+    
+
+         

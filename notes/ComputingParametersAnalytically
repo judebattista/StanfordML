@@ -1,0 +1,45 @@
+Normal Equation: method to solve for θ that minimizes J(θ) analytically
+Example: let J(θ) = aθ² + bθ + c
+    Then we can take the derivative and set = 0
+    J'(θ) = 2aθ + b = 0
+
+What if θ is a vector with our usual cost function?
+    Then we can take the partial derivatives of J for each θ and set them equal to zero
+    Solve the system of equations
+
+Let's say we have a training data set with m = 4
+1. Create a new column x₀ = 1 for each row
+2. create the matrix X of all the features (m x n+1)
+3. create the vector y of y values (m-dimensional)
+4. θ = (Xtran* X)^-1 * Xtran *  y
+
+In octave, use pinv(M) to find the inverse of a matrix and ' to find the transpose (X' = Xtrans):
+    θ = pinv(X'*X)*X'*y
+
+Gradient vs Normal for m examples with n features each
+
+Gradient Descent:
+    - Needs to choose α
+    - Needs many iterations
+    + Works well even with large n
+
+Normal Equation:
+    + No need to choose α
+    + No need to iterate
+    - need to compute (X' X)^-1 which is an nxn matrix: O(n³)
+    - slow if n is large: 1000 is fine, 10000 maybe not so much, 1000000 definitely use Gradient Descent
+
+Normal Equation Noninvertibility:
+
+What is X'X is not invertible (singular or degenerate)
+    This should be pretty rare
+    The octave command pint(X'*X)*X'*y will do the right thing
+        Just make sure we use pinv, not inv
+    Probably caused by 
+    1. redundant features (linearly dependent)
+        Eliminate redundancies
+    2. too many features (n ≥ m)
+        Delete some features or use regularization
+        n ≥ m is generally a bad idea anyways
+
+
