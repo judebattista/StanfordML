@@ -1,0 +1,124 @@
+Logistic Regression
+    Used for classification (discrete) problems, despite having 'regression' in the name
+    if y is either 0 (negative class) or 1 (positive class), this is a binary classification
+        While the class is arbitrary we often think of 0 as the absence of something and 1 as its presence
+    We will deal with multiclass problems later
+  
+We could try our linear regression model: h(x) = θ'x
+    Then    if h > 0.5, predict y = 1
+            if h < 0.5, predict y = 0
+    turns out, this is a bad idea
+        Indicator that this might not work: while y = 0 or 1, h(x) can be > 1 or < 0 so we have a range issue
+    In logistic regression, 0 ≤ h(x) ≤ 1
+
+Hypothesis Representation:
+    In linear regression h(x) = θ'x
+    For logistic regression we use a different definition:
+        h(x) = g(θ'x) where g(z) = 1/(1 + e^-z)
+            This is a sigmoid or logistic function
+        So h(x) = 1/(1 + e^-(θ'x))
+        The sigmoid function has horizontal asymptotes at 0 and 1. Convenient!
+    Again, θ is a parameter set
+    h(x) is the estimated probability that y = 1 (positive case) on input x
+    h(x) = P(y = 1 | x;θ) or the probability that y = 1, given x, parameterized by θ
+    Then P(y = 0 | x;θ) = 1 - h(x)
+
+Decision Boundary:
+    Suppose we predict y = 1 if h(x) ≥ 0.5 and y = 0 if h(x) < 0.5
+    Then 0.5 is our decision boundary
+    Looking at the g(z) plot, we see that g(z) ≥ 0.5 when z ≥ 0
+    Thus h(x) = g(θ'x) ≥ 0.5 when θ'x ≥ 0
+    Then y = 1 when θ'x ≥ 0 and y = 0 when θ'x < 0
+
+    Ex: θ' = [-3, 1, 1] for h(x) = g(θ₀ + θ₁x₁ + θ₂x₂) what values of x lead to y = 0? y = 1?
+        y = 1 when θ₀ + θ₁x₁ + θ₂x₂ ≥ 0
+        so y = 1 when -3 + x₁ + x₂ ≥ 0 ⇒  x₁ + x₂ ≥ 3
+            This line (x₁ + x₂ = 3) is the decision boundary
+        The decision boundary is a function of the hypothesis and θ, NOT the data set
+
+    Ex: What if we have a more complex data set with a cluster of y=0 at the origin surrounded by a cloud of y = 1 values?
+        We can use higher order terms in our hypothesis:
+            h(x) = g(θ₀ + θ₁x₁ + θ₂x₂ + θ₃x₁² + θ₄x₂²)
+            say θ' = [-1, 0, 0, 1, 1]
+            Then y = 1 when -1 + x₁² + x₂² ≥ 0
+                or x₁² + x₂² ≥ 1 which is the equation of a circle centered at the origin with radius 1
+            Thus our decision boundary is the circle x₁² + x₂² = 1
+
+    Ex: Imagine higher order polynomial terms: cubics, quartics, etc.
+        These lead to more complex decision boundaries
+
+How do we choose θ for logistic regression?
+    Once again we have a cost function we are trying to minimize
+    Training set = {(x¹,y¹),(x²,y²), ... , (x(m),y(m))}    
+    m examples
+    x goes from x₀ to xₙ, x₀ = 1, y in {0, 1}
+    h(x) = 1/(1 + e^-(θ'x))
+    How do we choose θ?
+    Recall that for linear regression, J(θ) = 1/m ⋅ Σ 1/2 ⋅ (h(x(i)) - y(i))²
+    Let's define Cost(h(x(i), y(i)) = 1/2 ⋅ (h(x) - y)² for all a given x, y pair
+    Then Cost(h(x), y) = 1/2 (h(x) - y)²
+   
+    For logistic regression, we will still use J(θ) = 1/m ⋅ Σ Cost, but we need a new Cost
+        Since our h(x) is different, the linear regression Cost would give us a non-convex function, having potentially many local optima
+            This means that gradient descent is not guaranteed to converge to the global optimum
+    We will define:
+        Cost(h(x), y) =     { -log(h(x))    if y = 1
+                            { -log(1-h(x))  if y = 0
+        Examining -log(h(x)), y = 1 we find some useful properties:
+            Cost = 0 if y = 1 and h(x) = 1 so the cost for a successful prediction is low
+            Cost = ∞ if y = 1 and x →  0 so the cost for a diametrically opposed prediction is high
+
+        Examining -log(1-h(x)), y = 0 we see similar properties
+
+Simplified Cost Function and Gradient Descent
+    Cost(h(x), y) =     { -log(h(x))    if y = 1
+                        { -log(1-h(x))  if y = 0
+    can be written as:
+    Cost(h(x), y) = -ylog(h(x)) - (1-y)log(1-h(x))
+        This function is derived from the principle of maximum liklihood estimation
+    Thus we can write J(θ) using the new Cost function as:
+        J(θ) = -1/m ⋅ Σy(i)log(h(x(i))) + (1-y(i))log(1 - h(x(i)))
+    Now we need to find the θ that minimizes J(θ) for our training set
+    Then for a new x value we can predict y by using h(x) for our derived θ
+
+    To minimize J we will use gradient descent:
+        θⱼ := θⱼ- α ⋅ δ/δθⱼJ(θ)
+        θⱼ := θⱼ- α ⋅ 1/m ⋅ Σ(h(x(i)) - y(i))xⱼ(i)
+    We still need to update all θ simultaneously
+    This equation is the same as that for linear regression!
+        However, keep in mind that h(x) is very different, so the algorithm is different
+    The vectorized version is:
+        θ = θ - α/m ⋅ X'(g(Xθ) - y⃗)
+
+    Feature scaling is still a useful tool for linear regression
+
+Advanced Optimization
+    In addition to Gradient Descent, we can also use Conjugate gradient, BFGS, and L-BFGS
+    In each case, we need a way to compute J(θ) and δ/δθⱼ J(θ)
+    We will not delve into these for this course, however they do have some advantages:
+        No need to manually pick α
+        Often faster than gradient descent
+    However, they are also more complex
+    fminunc lets us use these in Octave
+
+for a given θ = [θ₀;θ₁;...;θₙ], our function for logistic regression looks something like:
+function [jVal, gradient] = costFunction(theta)
+    jVal = [code to compute J(θ)[
+    gradient(1) = [code to compute δ/δθ₀ J(θ)]
+    gradient(2) = [code to compute δ/δθ₁ J(θ)]
+    ...
+    gradient(n+1) = [code to compute δ/δθₙ J(θ)]
+
+Multi-class Classification: One-vs-all
+    If we have three classes A, B, and C, we create three binary classification problems 
+        A vs B or C, B vs A or C, C vs A or B
+    This gives us three decision boundaries and three classifiers, each trained to recognize one of the classes
+    To make a prediction on a new x, we run all three classifiers and take the max
+
+
+    
+ 
+
+    
+
+                  

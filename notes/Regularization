@@ -1,0 +1,76 @@
+The problem of overfitting
+    As we increase the degree d of the polynomial h, we get a better fit to our data
+    if d is too low, we get an underfit, which we say has "high bias"
+        Bias is a term meaning that the model has a preconception that the data has a specific fit, such as linear, and ignores deviations in the data
+    when d = the number of training samples, h will pass through each point exactly
+        However, this is lousy for predicting future points
+        This is an overfit, which we say has "high variance" which means that the hypothesis space is too large and we do not have enough data to constrain it
+        We may also say that an overfit gails to generalize
+
+To address overfitting we have two main approaches:
+    1. Reduce the number of features via:
+        A. Manual selection
+        B. Model selection algorithm
+        This does entail throwing away some of the information we have
+        Works well when only some subset of the features have much impact on our prediction of y
+    2. Regularization
+        Keeps all the features, but reduce the magnitude/values of the θ parameters
+        Works well when we have a lot of features, each of which contributes a little bit to predicting y
+
+Regularization and the cost function
+    Best way to gain intuition about regularization is to implement it
+    For example if we add 1000θ₃ + 1000θ₄ to our cost function forces θ₃ and θ₄ to be small to minimize the cost
+    With small values for all parameters θ, this results in a "simpler" hypothesis (a smoother curve) which is less prone to overfitting
+    Consider our housing price example with:
+        features: x₁, x₂, ... , x₁₀₀
+        parameters: θ₀, θ₁, ... , θ₁₀₀
+    We do not have a good way of knowing in advance which features have the most impact
+    Then we can modify our cost function for linear regression:
+        J(θ) = 1/2m ⋅ Σ(h(x(i)) - y(i))² + λΣθⱼ²
+        Here λ, the regularization parameter, acts to shrink all the θ values
+        Note that we start the sums at 1 rather than 0, thus avoiding penalizing θ₀ for being large
+            This is a convention. In practice it makes little difference
+        λ controls a tradeoff between two different goals:
+            The first term tries to fit the training data well
+            The second term tries to keep the θ parameters small
+        If λ is too large, all θ terms except θ₀ get crushed, leaving us with a horizontal line as our fit, which is usually an underfit
+
+Regularization with Linear Regression
+    J(θ) = 1/2m ⋅ Σ(h(x(i)) - y(i))² + λΣθⱼ²
+    Then our update functions need to be separated:
+        θ₀  := θ₀ - α/m ⋅ Σ(h(x(i)) - y(i))x₀(i)
+        θⱼ  := θⱼ - α [1/m ⋅ Σ(h(x(i)) - y(i))x₀(i)  + λ/m ⋅ θⱼ] ←  note that the λ/m term is not part of the summation over i
+            := θⱼ(1 - αλ/m) - α/m ⋅ Σ(h(x(i)) - y(i))x₀(i)
+            This 1 - αλ/m term has a pretty interesting effect
+            It must be less than 1, often only a bit less than 1.
+            The second term remains unchanged, so we wind up with a slightly reduced θⱼthan we would have with the old version
+
+    If we use our vectorized version:
+    θ = (X'X)^(-1) X'y becomes 
+    θ = (X'X + λM)^(-1) X'y where M is the n+1 x n+1 identity matrix with the first 1 replaced by a 0 since θ₀ does not get regularized
+
+    What about the invertibility problem?
+        If m (# examples) ≤ n (# features) then the X'X matrix is not invertible (or is singular)
+        However, as long as λ > 0, the new matrix will always be invertible
+
+Regularization with Logistic Regression:
+    J(θ) = -1/m ⋅ Σ y(i) ⋅ log(h(x(i))) + (1 - y(i))log(1-h(x(i))) which becomes 
+    J(θ) = -[1/m ⋅ Σ y(i) ⋅ log(h(x(i))) + (1 - y(i))log(1-h(x(i)))] + λ/2m Σθⱼ², where again θ is summed from 1 to n, not 0 to n
+
+    Then our update function becomes:
+    θ₀  := θ₀ - α/m ⋅ Σ(h(x(i)) - y(i))x₀(i)
+    θⱼ  := θⱼ - α [1/m ⋅ Σ(h(x(i)) - y(i))x₀(i)  + λ/m ⋅ θⱼ] ←  note that the λ/m term is not part of the summation over i
+        := θⱼ(1 - αλ/m) - α/m ⋅ Σ(h(x(i)) - y(i))x₀(i)
+    Just like the base version, the update step looks identical to the linear regression version, however we must recall that h(x) is different
+
+With advanced optimization methods:
+function [jVal, gradient] = costFunction(theta)
+    jVal = [code to compute J(θ)]
+    gradient(1) = [code to compute δ/δθ₀ J(θ)]
+    gradient(2) = [code to compute δ/δθ₁ J(θ)]
+    gradient(3) = [code to compute δ/δθ₂ J(θ)]
+    ...
+    gradient(n+1) = [code to compute δ/δθₙ J(θ)]
+   
+    All the code needs to account for the regularization term EXCEPT for gradient(1)
+ 
