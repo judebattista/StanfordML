@@ -1,0 +1,109 @@
+Non-linear Classification:
+We can use logistic regression for non-linear classification problems but for x1 through x100, if we need to include second order terms we get about 5000 features
+If we were to include cubic terms, we get O(n³) terms, about 170k
+Many ML problems rely on large n values, such as image recognition which has a matrix of pixel intensity values
+
+Neurons:
+    Dendrites: input wires
+    Does some computation
+    Axon: output wire
+
+    Communicate with each other via 'spikes' (pulses of electricity)
+    Axon connects to another neuron's dendrites
+
+Computationally:
+Some number of inputs (exes)
+May have an x₀ = 1, the bias unit or bias neuron
+Computation
+outputs h(x) = 1/(1+e^(-θ'x))
+
+This represents an artificial neuron with a Sigmoid (logistic) activation function represented by h
+The theta parameter vector is also known as the weights of the system
+
+We may have multiple layers in a network:
+x: input layer
+a: hidden layer - or layers
+the layer that outputs h(x) is the output layer
+
+Computations:
+aᵢ(j) = "activation" of unit i in layer j
+θ(j) = matrix of weights controlling function mapping from layer j to layer j+1
+
+a's are all one hidden layer
+a₁(2) = g(θ₁₀(1)x₀ + θ₁₁(1)x₁ + θ₁₂(1)x₂ + θ₁₃(1)x₃)
+a₂(2) = g(θ₂₀(1)x₀ + θ₂₁(1)x₁ + θ₂₂(1)x₂ + θ₂₃(1)x₃)
+a₃(2) = g(θ₃₀(1)x₀ + θ₃₁(1)x₁ + θ₃₂(1)x₂ + θ₃₃(1)x₃)
+
+h is the third layer, consisting of a single node
+h(x) = a₁(3) = g(θ₁₀(2)a₀(2) + θ₁₁(2)a₁(2) + θ₁₂(2)a₂(2) + θ₁₃(2)a₃(2))
+
+Here θ(1) is a 3x4 matrix, θ(2) is a 1x4 matrix
+In general if a network has sⱼunits in layer j, and sᵢunits in layer j+1 then θ(j) will be an sᵢx (sⱼ + 1) matrix
+
+Forward Propagation: Vectorized Implementation
+Let's define z such that:
+    a₁(2) = g(z₁(2))
+    and z(2) = [z₁(2);z₂(2);z₃(2)]
+
+Then for x = [x₀;x₁;x₂;x₃]:
+    a(1) = x
+    z(2) = θ(1)x = θ(1)a(1)
+    a(2) = g(z(2))  -- Note that a(2) and z(2) are both elements of R³
+                    -- This just applies the sigmoid function element-wise
+    We also need a bias unit a₀(2) = 1
+    Adding this makes a(2) an element of R⁴
+    z(3) = θ(2)a(2)
+    h(x) = a(3) = g(z(3))
+
+The last two layers of this network are basically logistic regression except that instead of X as inputs we have a₁(2), a₂(2), a₃(2)
+
+Example:
+    Consider x₁ and x₂ to be binary
+    We will be using XOR/XNOR
+    Turns out that XNOR (and reversing our y values) works better than XOR
+
+    Simple example: AND
+        x₁, x₂ in {0, 1}
+        y = x₁ AND x₂
+        Then x = [1 ; x₁ ; x₂] and θ = (say) [-30 ; 20 ; 20]
+        and h(x) = g(-30 + 20x₁ + 20x₂)
+       
+        g(0) = .5
+        g(4.6) = .99
+        g(-4.6) = .01
+
+        x₁      x₂      h(x)
+        0       0       g(-30) ≅ 0
+        0       1       g(-10) ≅ 0
+        1       0       g(-10) ≅ 0
+        1       1       g(10)  ≅ 1
+
+        Which is the truth table for AND
+
+        Similarly, if θ = [-10 ; 20 ; 20] we get OR
+        θ = [10 ; -20] = NOT x₁
+        A large negative weight effectively negates an input
+        What about (NOT x₁) AND (NOT x₂)?
+            Something like θ = [ 20 ; -30 ; -30] 
+            [10 ; -20 ; -20] in the video
+
+    Then x₁ XNOR x₂ is:
+        AND to a₁(2)
+        (NOT x₁) AND (NOT x₂) to a₂(2)
+        OR to a₁(3)
+
+        θ₁(1) = [-30 ; 20 ; 20]
+        θ₂(1) = [10 ; -20 ; -20]
+        θ₁(2) = [-10 ; 20 ; 20]
+
+Multiclass Classification:
+Extension of 1vsAll
+Say we want to classify Pedestrian vs Car vs Motorcycle vs Truck
+h(x) = [0 ; 0 ; 0 ; 0]
+Hopefully only one value is a one
+Training set is (x(1), y(1)), (x(2), y(2)), ... , (x(m), y(m))
+    where y(i) is the [p ; c ; m ; t] vector with a single 1 value representing the correct class and the rest are zero
+    and x(i) is an image
+
+
+
