@@ -1,0 +1,178 @@
+Training a Neural Network
+
+L = number of layers
+sl = nomuber of units (not counting bias unit) in layer l
+data is (x1, y1), (x2, y2), ..., (xm, ym) sets
+
+Binary Classification : y = 0, 1 →  one output unit
+    sL = 1
+    k = number of classes = number of output units = 1
+Multiclass Classification: k classes →  k output units
+    h(x) produces a k-dimensional vector
+    k output units
+    sL = k (k ≥ 3)
+
+Cost function:
+    Generalization of the Logistic Regression cost function:
+        J(θ) = -1/m * Σyi * log(h(xi)) + (1 - yi) * log(1 - h(xi)) + λ/2m * Σθⱼ² //note that the sums are over i and j respectively
+
+    h(x) is a K dimensional vector
+    h(x)ᵢ is the ith term of h(x) or the ith output
+    J(Θ) = -1/m [Σ(i = 1 to m) Σ(k = 1 to K) yiₖ * log(h(xi))ₖ + (1 - yiₖ)*log(1 - h(xi)ₖ)] 
+            + λ/2m * Σ(l = 1 to L-1) Σ(i = 1 to sl) Σ(j = 1 to sl + 1) (Θⱼᵢl)²
+    K represents the number of output units / the number of classes
+    l is the layer while L is the max layer
+    Note that we don't sum the regularization terms over the bias values
+    To minimize J using a built in optimization method, we need to supply J and each partial derivative of J
+
+Backpropagation:
+    Code to compute J is pretty straightforward. We will focus on its partial derivatives
+    Imagine that we only have one training example, (x, y)
+    Our NN has L = 4, s1 = 3, s2 = 5, s3 = 5, s4 = sL = 4
+    First we apply forward propagation:
+        a1 = x
+        z2 = Θ1*a1
+        a2 = g(z2) (add a2₀)
+        z3 = Θ2*a2
+        a3 = g(z3) (add a3₀)
+        z4 = Θ3*a3
+        a4 = h(x) = g(z4)
+    This lets us compute the activation value for every neuron in our network
+    To compute the gradient, we will use a Backpropagation algorithm
+    Intuitively, δlⱼ is the error of node j in layer l
+        alⱼ is the activation of the jth unit in layer l
+    Starting at the end (l = L = 4) we see that
+        δ4ⱼ= a4ⱼ - yⱼ= h(x)ⱼ - yⱼ
+        The vectorized version is d4 = a4 - y
+    With some math that we are definitely skipping, we can see that:        
+        δ3 = (Θ3)'δ4 .* g'(z3) - note that Θ3' is a transpose and g' is a derivative. This won't get confusing at all...
+        δ2 = (Θ2)'δ3 .* g'(z2)
+
+        g'(z3) = a3 .* (1 - a3)
+        g'(z2) = a2 .* (1 - a2), giving us
+        δ3 = (Θ3)'δ4 .* (a3 .* (1 - a3)) = (Θ3)'δ4 .* a3 .* (1 - a3)
+        δ2 = (Θ2)'δ3 .* (a2 .* (1 - a2)) = (Θ2)'δ3 .* a2 .* (1 - a2)
+        Note that there is no δ1 value, since layer 1 is just our inputs.
+
+    The math is complicated, but it is possible to prove that
+        δ/δΘlᵢⱼJ(Θ) = alⱼ* δ(l+1)ᵢ
+    IF λ = 0
+
+General Backprop algorithm
+    training set is (x1, y1), (x2, y2), ..., (xm, ym)
+    Δlᵢⱼ = 0 for all l, i, j (will eventually be used to compute δ/δΘlᵢⱼJ(Θ))
+    for i = 1 to m (working with xi, yi)
+        set a1 = xi
+        Perform forward propagation to compute al for l = 2 through L
+        Using yi, compute δL = aL - yi
+        Compute δ(L-1), δ(L-2), ... , δ(2)
+        Δlᵢⱼ:= Δlᵢⱼ+ alⱼ* δ(l+1)ᵢ
+            //The vectorized version of the last step is simply:
+            Δl := Δl + δ(l+1) * al'
+    if j ≠ 0:
+        Dᵢⱼ:= 1/m * Δlᵢⱼ+ λΘlᵢⱼ
+    if j == 0:
+        Dᵢⱼ:= 1/m * Δlᵢⱼ
+
+Then the partial derivative δ/δΘlᵢⱼ J(Θ) = Dlᵢⱼ
+
+Backprop Intuition
+    Figure out the error
+    Then work backwards through the layers to figure out how to fix that error
+    May or may not compute δ values for the bias units. If you do, they wind up being discarded.
+
+Unrolling Parameters:
+    Say we have a cost function:
+        function [jVal, grad] = costFunction(theta) ...
+        optTheta = fminunc(@costFunction, initialTheta, options)
+    This assumes that gradient, theta, and initialTheta are all vectors of size n+1
+        
+    But for a Neural Network(L=4):
+        Θ1, Θ2, Θ3 are all matrices
+        D1, D2, D3 are also matrices
+    We need to unroll them into vectors
+    Let's say that s1 = 10, s2 = 10, s3 = 1
+    Then Θ1 is 10x11, Θ2 is 10x11 and θ3 is 1x11
+    D1 is 10x11, D2 is 10x11, D3 is 1x11
+   
+    In Ocatave we can convert them using:
+        thetaVec = [Theta1(:) ; Theta2(:) ; Theta3(:)];
+        DVec = [D1(:) ; D2(:) ; D3(:)];
+
+    We can recover the original form using the reshape command:
+        theta1 = reshape(thetaVec(1:110), 10, 11);
+
+    For our learning algorithm
+        Start with initial params Θ1, Θ2, Θ3
+        unroll them to get initialTheta which gets passed to the optimization fcn which creates thetaVec
+        function [jval, grad] = costFunction(thetaVec)
+            then reshape thetaVec to get Θ1, Θ2, Θ3
+            Use forward and back props to get D1, D2, D3 and J(Θ)
+            Unroll D1, D2, D3 to get grad
+
+Gradient Checking:
+    Unlike our regression algorithms, it is not sufficent to ensure that our cost function is decreasing each iteration
+    Instead, we need to use gradient checking
+    Basically, always do this.
+    To numerically calculate the derivative of J(Θ) at some real value Θ, we can consider J(Θ - ε) and J(Θ + ε) and find the slope of the line between them 
+    d/dΘ J(Θ) = (J(Θ + ε) - J(Θ - ε)) / 2ε
+    ε needs to be small, usually on the order of 10^-4
+    
+    When Θ is the unrolled vector: Θ = Θ₁,Θ₂,...,Θₙ
+    δ/δΘ₁ = (J(Θ₁+ε, Θ₂, ..., Θₙ) - J(Θ₁-ε, Θ₂, ..., Θₙ)) / 2ε
+    etc.
+    In Octave:
+        for i = 1:n,
+            thetaPlus = theta;
+            thetaPlus(i) = thetaPlus(i) + EPSILON;
+            thetaMinus = theta; 
+            thetaMinus(i) = thetaMinus(i) - EPSILON
+            gradApprox = (J(thetaPlus) - J(thetaMinus)) / (2*EPSILON)
+        end;
+
+        check that gradApprox is more or less equal to DVec calculated by backprop
+
+    Implementation Notes:
+        Use Backprop to compute DVec (unrolled D1, D2, D3, etc)
+        Implement numerical gradient check to compute gradApprox
+        Make sure they give similar values
+        Turn off gradient checking and rely on backprop for learning. If we leave gradient checking on, the learning function will be hella slow.
+
+Random Initialization
+    We could set initialTheta - zeros(n, 1)
+    While this works for logistic regression, it does not work for a NN, since a1 = a2 and δ1 = δ2, etc
+        The partial derivatives are also equal, so after each update the parameters going into each hidden unit are identical to each other so a1 = a2, etc      
+    If we have more than one feature, this is a problem
+    Random initialization breaks this symmetry.
+    We want to initialize each theta value to something in [-ε, ε]:
+        Theta1 = rand(10, 11) * (2*INIT_EPSILON) - INIT_EPSILON;
+    Note that this epsilon has nothing to do with the numerical gradient checking epsilon
+
+Putting the pieces together
+1. Pick a network architecture
+    a. number of input units = dimension of features xi
+    b. number of output units = number of classes
+    c. a single hidden layer is a reasonable default. If more than one, then keep the same number of nodes in each hidden layer. Usually, the more nodes the better
+    d. We will learn more about this later
+2. Train the network
+    a. Randomly initialize weights (usually to small values near zero)
+    b. Implement forward prop to get h(xi) for any xi
+    c. Implement code to compute the cost fcn J(Θ)
+    d. Implement backprop to compute partial derivatives of J
+        for loop to iterate over training data, forward and back prop for each training example
+            more advanced versions may vectorize the process, much more complicated
+            this finds the al and δl terms for l = 2, 3, ..., L
+            then Δl = Δl + δ(l + 1) * (al)'
+        compute the partial derivative terms
+    e. Use gradient checking to check the partial derivative values
+        DISABLE AFTER CHECK
+    f. Use gradient descent or other optimization method with back prop to try to minimize J(Θ)
+        Note that the cost function is no longer convex, so it is susceptible to local optima. Usually not a problem. 
+     
+    
+    
+
+    
+
+
+        
