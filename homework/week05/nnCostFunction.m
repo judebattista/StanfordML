@@ -67,7 +67,8 @@ theta2_grad = zeros(size(theta2));
 % Do forward prop
 a1 = [ones(m, 1) x];
 z2 = a1*(theta1');
-a2 = [ones(m, 1) sigmoid(z2)];
+a2bias = ones(size(z2, 1), 1);
+a2 = [a2bias sigmoid(z2)];
 z3 = a2 * (theta2');
 h = sigmoid(z3);
 
@@ -89,23 +90,55 @@ J += costLambda;
 % -------------------------------------------------------------
 % Part 2:
 
-delta3 = zeros(size(ybin))
-delta2 = zeroes()
-
-
+%{
 for ndx = 1:m
     % Set our input layer to the nth training example
     a1 = x(ndx, :);
+    a1 = [1 a1];
+    size(theta1)
+    size(a1)
     % perform forward prop with this input set
     % note that our input is now a vector rather than a matrix 
-    a1 = [1 a1];
-    z2 = a1*(theta1');
-    a2 = [1 sigmoid(z2)];
-    z3 = a2 * (theta2');
+    z2 = theta1 * a1'
+    %a2bias = ones(size(z2, 1), 1)
+    
+    %a2 = [a2bias sigmoid(z2)];
+    a2 = [1; sigmoid(z2)]
+    z3 = theta2 * a2;
     h = sigmoid(z3);
-    delta3n = h - ybin;
-    delta2n = theta2' * delta3n .* sigmoidGradient(z2);
+    delta3 = h - ybin(ndx, :);
+    size(theta2)
+    size(delta3)
+    size(z2)
+    delta2 = (theta2 * delta3) .* sigmoidGradient([1; z2]);
+    delta2 = delta2(:, 2:end);
+
+    theta1_grad += delta2 * a1';
+    theta2_grad += delta3 * a2';
+
+    theta1_grad /= m;
+    theta2_grad /= m;
 endfor
+%}
+
+% My for loop isn't quite right...
+% But I'm pretty sure we can do all this with matrices instead of a for loop:
+delta3 = h - ybin;
+z2bias = ones(size(z2, 1), 1);
+delta2 = (delta3 * theta2) .* sigmoidGradient([z2bias z2]);
+delta2 = delta2(:, 2:end);
+
+% That seems much easier...
+
+theta1_grad = (delta2' * a1) / m;
+theta2_grad = (delta3' * a2) / m; 
+
+reg1 = lambda / m * theta1(:, 2:end);
+reg2 = lambda / m * theta2(:, 2:end);
+
+
+theta1_grad += [zeros(size(reg1, 1), 1) reg1];
+theta2_grad += [zeros(size(reg2, 1), 1) reg2];
 
 
 % =========================================================================
