@@ -1,0 +1,121 @@
+Say we have implemented regularized linear regression to predict housing prices
+However, our model makes unacceptably large errors in its predictions. How do we fix it?
+    1. Get more training examples
+        This can be time consuming and may not help    
+    2. Try a smaller set of features
+    3. Maybe we need more features
+        Again, can be expensive
+    4. Add polynomial features
+    5. Change λ (increase or decrease)
+
+Is there a better way than gut instinct to choose one of these?
+Diagnostics!
+    Can take time to implement
+    Generally worth the investment
+
+How can we tell whether our hypothesis is good?
+Overfitting - the hypothesis does not generalize well to new examples external to the training set
+Split the data into two portions: training and test
+    70/30 split is pretty common
+    Want to randomly select the data in each subset
+Learn the parameters θ from the training data, minimizing J
+Compute the test set error, Jtest 
+    Linear regression = 1/2m Σ(h(x) - y)² for all the elements in the test set
+    Logistic regression = -1/m Σ y*log(h(x)) + (1 - y)log(h(x))
+        We can also use the misclassification error (the 0/1 misclassification error)
+        err(h, y) = { 1 if h ≥ 0.5 and y = 0 or if h < 0.5 and y = 1 (if we misclassified it)
+                    { 0 otherwise 
+        then test error = 1/m * Σ err(h, y), which turns out to be the fraction of test samples that were misclassified
+
+So, what if we evaluate our error and decide it's too high. How do we handle the resultant model selection problems?
+    Degree of polynomial?
+    Choice of λ?
+Once we train our algorithm, the error on our training set is likely to be lower than the generalized error. Basically, don't get too excited
+    Training error is not a good proxy for generalized error
+Consider the problem of choosing polynomial terms to add to our model. This creates an additional parameter d = the degree of the polynomial
+Say d is in the range 1-10, how do we choose the best d?
+    We could run ten different training sessions and find ten different θs, then calculate the error on the test set for each of them
+    Say d = 5 (fifth degree polynomial) does the best on the test set
+    Our error on the test set is NOT a fair estimate of the generalized error since our choice of d is specifically fitted to the test data
+        (it will be too optimistic)
+    To avoid this we split the dataset into training, cross-validation (cv), test sets
+        60-20-20 is common
+    We can define our CV error much as our test error
+    Now, we can use the CV set to select the model and the test set to do our final test
+
+Bias vs. Variance:
+If a machine learning algorithm performs poorly it probably has either a bias (underfitting) or a variance (overfitting) problem
+If we plot the errors against our d parameter, what do we see?
+    training error goes down as d goes up
+    cross-validation error (or test error) we expect to see something like a parabola as we move from underfitting to optimum to overfitting
+If your CV error is high and your training error are both high, you have a bias (underfitting) problem
+Conversely, if your CV error is high but your training error is low, you have a variance (overfitting) problem
+
+How does regularization affect bias and variance?
+Recall that for linear regression regularization, we have a λ/2m * Σθ² term in the cost function for regularization
+    Large λ tends to create underfitting as the regression term overwhelms the error term in the cost function
+    Small λ tends to create overfitting as the regularization term fades away, leaving the error term dominant
+With regularization, we can differentiat between J, Jtrain, Jcv, and Jtest
+Now Jtrain, Jcv, and Jtest are both 1/2m * Σ(h(x) - y)²
+    Basically ignore the regularization term
+    Note that m values may differ between training, CV, and test sets
+Now we can choose a lambda 0, 0.01, 0.02, 0.04, 0.08, ..., 10
+For each value of λ, we get a corresponding θ
+We can then use the CV set to pick the optimal θ to minimize the error on the CV set
+    This then gives us the hypothetical best λ value
+Now we can test the chosen λ, θ pair on our test set.
+We can plot our J against our lambda option
+    We expect Jtrain to increase exponentially as λ grows since it overpowers the fit
+    We expect Jcv to be parabolic as before
+        This is what we want to minimize
+    Keep in mind that these are idealized figures, real datasets may be a good deal messier
+
+Learning Curves:
+Both for sanity checking an algorithm and to tune its performance
+We can plot either Jtrain or Jcv against m
+Since m is usually fixed, we pick smaller subsets of m at each iteration
+For small values of m, we expect J to be very low
+We expect the error to grow as our training set grows
+
+Conversely, as m grows, we expect our Jcv to decrease
+Let's say we have a hypothesis with high bias (underfitting), say a sqrt(x) type function that we are trying to fit linearly. 
+    It doesn't take a very large number of samples to find the best possible linear fit (even though this isn't a good overall fit)
+    Thus our Jcv starts crappy, has a very shallow improvement curve and levels out quickly
+    The training error starts out small, rapidly approaches Jcv and also levels out
+    You wind up with high values for both Jcv and Jtrain
+    If an algorithm is suffering from high bias, adding more training data does not help much
+
+On the other hand if we have a hypothesis with high variance (overfitting), we expect to see:
+    Jtrain starts out low (small m) and increases slowly since the extremely good fit counteracts the growing error due to increasing m
+    Jcv starts out high (small m) 
+    As before we get opposed exponential curves, but there is a gap between them as Jcv remains above Jtrain
+    If we take the limit as m→ ∞, we would expect them to converge but we don't have infinite datasets
+    This does imply that if we have a variance problem, getting more training data is likely to help reduce Jcv
+
+Debugging a learning algorithm
+Suppose we have implemented regularized linear regression to predict housing prices.
+However during testing, it makes unacceptably large errors in predictions.
+What should we try next?
+    Get more training examples - if we see high variance
+    Try smaller sets of features - if we see high variance
+    Try getting additional features - for high bias
+    Try adding polynomial features - for high bias
+    Decrease λ - high bias
+    Increase λ - high variance
+
+Practical advice for NN configuration
+Small NN: few params, hidden nodes
+    Prone to underfitting
+    Computationally cheap
+
+Large NN: more params, hidden nodes
+    Prone to overfitting
+    Computationally expensive
+    use λ to addess overfitting via regularization
+
+Generally speaking you want a large network, rely on regularization to address overfitting
+Starting with a single hidden layer is a reasonable default.
+Can add layers and use cross-validation to pick an appropriate number of hidden layers
+
+
+ 
