@@ -1,0 +1,131 @@
+Let's say we want to build a spam classifier
+How do we decide what to work on?
+One approach:
+    Supervised learning
+    Choose x features of email
+    y = spam (1) or not spam (0)
+    features x: choose 100 words that indicate spam or not spam
+        'buy', 'deal', your name, etc
+        In practice we would cull the words from those that appear most commonly in a training set
+    check whether each word appears in the email and create a boolean vector for x representing appearance or non-appearance
+Where should we spend our time to make sure the filter has low error?
+    Collect lots of data - honeypot project
+        Time intensive
+        May not help
+    Develop more sophisticated features
+        email routing info from header
+        better message body features
+            punctuation
+            Are discount and discounts the same word? Deal and dealer?
+    algorithm to detect misspellings
+
+DO NOT RELY ON GUT FEELINGS (Yeah, no shit)
+
+Start by building a simple algorithm you can implement quickly
+    Implement and test on CV data
+Plot learning curves to decide if it suffers from bias or variance and thus whether more data, more features, or something else might help
+Manually examine the examples in the CV set that your algorithm failed on. Do you see any trends?
+    Say you have 500 examples in CV and your algorithm misses 100 of them
+    Examine the misses to see:
+    1. What type of email it is: pharma, replica, theft, phishing, etc
+        Focus effort on any that are disproportionately represented
+    2. What cues might have helped classify it correctly?
+        How common are those cues?
+(Basically apply the Pareto Principle)
+    3. Use numeric metrics - single numbers are ideal
+        Should discount/discounting/discounts be treated the same?
+        Can use stemming software like the Porter stemmer, but this can hurt as well as help - universe is probably not the same as university
+        Difficult to see if stemming software would help - need to just try it and see
+        We need a way to measure the algorithm's performance with and without stemming
+            %error is one possibility
+        Should we distinguish upper vs lower case? Again, we probably need to try it and see, but again we need a way to measure performance
+        We want to automate the measurement as much as possible
+For error analysis, we always want to use the CV set so we in order to keep our test set valid
+
+
+Let's say we want to predict whether a patient has cancer (y=1) or not (y=0)
+Let's say our algorithm is 99% correct on test cases. 1% error sounds pretty good...
+But what if only 0.50% of patients actually do have cancer (Bayes theorem problem!)
+Then our error dwarfs the actual rate of occurrence.
+If we just predicted that nobody has cancer, we would only have 0.50% error... twice as good as our algorithm
+
+Let's say that we have an algortithm with 99.2% accuracy
+A change boosts it to 99.5% accuracy. Is this significant?
+    Yes! It drops our error from 0.8 to 0.5, more than a 33% improvement
+    But this doesn't tell us if we have improved the quality of the algorithm since in the above example we could achieve this result by always predicting no cancer
+    This is a stupid algorithm
+
+Instead we can work with Precision/Recall
+y = 1 in presence of rare class that we want to detect
+                        Actual Class
+                        1           0
+
+Predicted       1   true pos       false pos 
+  Class
+                0   false neg       true neg
+
+Precision:  of all the cases that we predicted y=1, what fraction was correct? true pos / (true pos + false pos)
+Recall:     of all the cases where y=1, what fraction did we correctly predict? true pos / (true pos + false neg)
+
+Note that our 'never predict cancer' algorithm has a 0% recall.
+Usually when we talk about precision and recall, y=1 indicates the presence of the rare class
+
+Which of precision and recall is more important and how do we control the balance?
+Let's say we've trained a logistic regression classifier for the cancer problem above
+    Normally we predict y=1 if h ≥ 0.5
+    But we only want to tell someone they have cancer if we're really sure
+    So perhaps we bump the threshold up to 0.7
+    This gives us higher precision. Hurray!
+    ... but also reduces our recall. That's a lot of dead bodies.
+
+    Conversely, we can avoid false negatives by reducing our threshold
+    When in doubt, predict cancer.
+    This will increase our recall but reduce our precision.
+
+If we plot precision vs recall the curve can take many shapes but should be inversely related
+
+Let's say we have three algorithms with different (p, r) pairs:
+a1 = (.5, .4)
+a2 = (.7, .1)
+a3 = (.02, 1.0)
+
+Which is best?
+Recall the importance of single number evaluators from earlier!
+    We have lost that by moving to a two number evaluation
+    How do we balance these disparate pairs?
+
+How do we get back to a single value?
+We could average them: (p + r) / 2
+    This has the same problem we were trying to avoid! By always predicting one or zero, we get a garbage classifier, but a high average
+We can use an F score: 2PR/(P + R) (or F₁ score)
+    By this measure a1 = .444
+                    a2 = .175
+                    a3 = .0392
+    F₁ score penalizes very low p or r values by taking the product
+        p or r = 0 yields a score of 0
+        The two in the denominator makes it scale from 0 to 1
+
+Data for machine learning:
+In a study trying to choose from easily confusable words like to, too, and two, Banko and Brill ran four different classification algorithms
+    All improved as the training set got larger
+    Implication: an inferior algorithm with more training data can outperform a superior algorithm
+    "It's not who has the best algorithm that wins. It's who has the most data" - how can we tell when this is true?
+
+Large data rationale:
+    Assume feature x in R(n+1) has sufficient information to predict y accurately
+        The words around the confusable word choice have the information necessary to predict the correct word 
+    Counterexample: predict housing price only from area - nearly impossible, so you need more features
+    Useful test: given the input, how confident would a human expert be?
+    
+Let's say the assumption holds and we use a learning algorithm
+    Logres or linres with many features
+    NN with many hidden units
+    These all tend to have low bias so Jtrain should be small
+
+Combine this with a large number of parameters along with a very large training set (so we are unlikely to overfit)
+    Then Jtrain should be close to Jtest
+
+Then Jtest should also be small
+
+Basically, pick your algorithm to minimize bias and your dataset to minimize variance
+
