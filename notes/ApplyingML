@@ -55,7 +55,7 @@ How does regularization affect bias and variance?
 Recall that for linear regression regularization, we have a λ/2m * Σθ² term in the cost function for regularization
     Large λ tends to create underfitting as the regression term overwhelms the error term in the cost function
     Small λ tends to create overfitting as the regularization term fades away, leaving the error term dominant
-With regularization, we can differentiat between J, Jtrain, Jcv, and Jtest
+With regularization, we can differentiate between J, Jtrain, Jcv, and Jtest
 Now Jtrain, Jcv, and Jtest are both 1/2m * Σ(h(x) - y)²
     Basically ignore the regularization term
     Note that m values may differ between training, CV, and test sets

@@ -1,0 +1,230 @@
+SVMs are often used for complex non-linear functions
+Optimization objective:
+SVM is a modification of linear regression
+Recall that logistic regression is characterized by:
+    h(x) = 1 / (1 + e^(-θ'x))
+    let z = θ'x so h = 1 / (1 + e^-z)
+    Then our hypothesis is h(x) = g(z)
+    If y = 1, we want h(x) ~ 1, θ'x >> 0
+    If y = 0, we want h(x) ~ 0, θ'x << 0
+
+Alternatively, we can view logistic regression as its cost function:
+    The cost of one term is J = -y*log(h(x)) + (1-y)*log(1-h(x))
+    If y = 1, the first term dominates: -log(h(x))
+    
+    For an SVM, we change the cost function:
+        anything greater than 1 has a cost of 0
+        anything less than one is a line that approximates the original cost function
+    If y = 0, then the second term dominates: -log(1 - h(x))
+    For the SVM:
+        anything less than -1 has a cost of zero
+        anything greater than -1 is a line that approximates the original cost function 
+   Then we have cost₁(z) and cost₀(z) (or cost1(z) and cost0(z)
+
+    Now we again have a minimization problem for the cost function.
+    We need to find a θ that minimizes:
+        1/m * Σ y(i)cost₁(θ'k(i)) + (1 - y(i))cost₀(θ'x(i)) + λ/2m * Σθj²
+        As ever, our sum over j starts at 1, not zero since we do not regularize the first term
+    By convention, we get rid of the 1/m terms since they don't affect the minimization.
+    This gives us:
+        Σ y(i)cost₁(θ'k(i)) + (1 - y(i))cost₀(θ'x(i)) + λ/2 * Σθj²
+    Instead of working with an A + λB form, we use CA + B
+    C is similar to 1/λ
+    This gives us:
+       C * Σ [y(i)cost₁(θ'k(i)) + (1 - y(i))cost₀(θ'x(i))] + 1/2 * Σθj²
+    This is the function to minimize for SVMs
+    
+Our hypothesis is also a little different:
+    h(x) =  { 0 if θ'x < 0
+            { 1 if θ'x ≥ 0
+    Note that this is no longer a probability
+
+SVMs are often referred to as Large Margin Classifiers
+If y = 1, we want θ'x ≥ 1 (not just ≥ 0)
+If y = 0, we want θ'x ≤ -1 (not just < 0)
+This gap builds in a safety margin
+What if C is a very large vale?
+    Then the first term must approach zero 
+    Thus we want y(i)cost₁(z(i)) + (1-y(i))cost₀(z(i)) = 0
+    We need to find a θ to minimize 1/2 Σθ(j)² such that:
+        when y(i) = 1, z ≥ 1
+             y(i) = 0, z ≤ -1
+
+For reasonably well-separated classes, we can draw many boundary lines between them
+An SVM chooses one with a large distance between the closest examples of each class
+This distance is called the 'margin' of the SVM
+An SVM attempts to maximize this margin
+When C is very large, this approach does tend to be sensitive to outliers
+Smaller C values perform better with outliers and when the data is not simply linearly separable
+A large C makes it easier to vizualize
+
+Math behind SVMs:
+for column vectors u, v the inner product u⋅p is the orthogonal projection of u onto v
+    (or v onto u)
+This is the same as u'v = v'u
+This is also |u||v|cosθ where θ is the angle between the vectors
+Note that while the inner product is a single number, it is also signed.
+    Can be negative if cosθ is negative
+
+For an SVM with large C, we want to choose theta to minimize 1/2 Σθⱼ² such that
+    θ'x(i) ≥ 1 if y(i) = 1 and
+    θ'x(i) ≤ -1 if y(i) = 0
+We can examine a simple case where θ₀ = 0 and n = 2
+Then we want to minimize:
+    1/2 * (θ₁² + θ₂²) 
+    = 1/2 (sqrt(θ₁² + θ₂²))²
+    = 1/2 ||θ||²
+So, really we're just minimizing the norm squared of θ
+This holds true even when θ₀ ≠ 0
+
+Now, θ'x(i) is just θ⋅x(i) = p(i) * ||θ|| where p(i) is the orthogonal projection of x(i) onto θ
+    This also equals θ₁x₁(i) + θ₂x₂(i) as we would expect
+Then our boundary conditions can be rewritten as:
+    p(i) * ||θ|| ≥ 1 if y(i) = 1
+    p(i) * ||θ|| ≤ -1 if y(i) = 0
+
+The big takeaway here is that ||θ|| needs to be small, but | p(i) * ||θ|| | > 1
+This means that |p(i)| cannot be too small
+|p(i)| is effectively the margin that we are seeking to maximize in an SVM
+
+Kernels (part one)
+Let's say we have a non-linear decision boundary.
+Then we predict y = 1 if θ₀ + θ₁x₁ + Θ₂x₂ + θ₃x₁x₂ + ... ≥ 0
+We can use a simpler notation for this polynomial:
+    θ₀ + θ₁θf₁ + θ₂f₂ + θ₃f₃ + ...
+    where in this case, f₁ = x₁, f₂ = x₂, f₃ = x₁x₂, etc
+Is there a better choice for our features fᵢ?
+Given an x, compute a new feature depending on proximity to landmarks l1, l2, l3,...
+Given x:    f₁ = similarity(x, l1) = exp(-||x - l1||² / (2σ²)) 
+            f₂ = similarity(x, l2) = exp(-||x - l2||² / (2σ²))
+            f₃ = similarity(x, l3) = exp(-||x - l3||² / (3σ²))
+This is a kernel function, specifically this one is a Gaussian kernel
+The similarity functions define a kernel
+similarity(x, li) = k(x, li)
+How does the similarity work?
+    If x ~ l1, k(x, l1) = exp(0) = 1
+    If x is far from l1, k(x, l1) = exp(-large number) = close to zero
+Each landmark defines a new function
+Example: l1 = (3;5), σ = 1 so 2σ² = 2
+    f₁ = exp(-||x-l₁|| / 2)
+As σ² gets closer to zero, the feature becomes more sharply defined, that is the slope of the
+    contour plot increases
+As σ² grows, the slope of the plot becomes more gradual
+
+Let's say we predict 1 when θ₀ + θ₁f₁ + θ₂f₂ + θ₃f₃ ≥ 0
+    θ₀ = -0.5, θ₁ = 1, θ₂ = 1, θ₃ = 0
+    Let x be close to l1 and far from l2, l3
+    Then f₁ ~ 1, f₂ ~ 0, f₃ ~ 0
+    Then our prediction function is -0.5 + 1 = 0.5 which is greater than 0 so we predict 1
+    If x is far away from all of our landmarks, then we get zero for all our f values giving us:
+    θ₀ = -0.5 < 0 so we predict 0
+    We wind up with a boundary surrounding l1 and l2 (l3 gets excluded since θ₃ = 0)
+
+How do we find our landmarks?
+We create landmarks for all of our training examples
+Thus we wind up with m landmarks
+Then we can create a vector f of features such that fi = similarity(x, li) for x = 1 to m
+    f0 = 1
+For a training example (x(i), y(i)):
+    f₁(i) = sim(x(i), l1)
+    .
+    .
+    .
+    fm(i) = sim(x(i), l(m))
+
+One of these features will compare x(i) to l(i) which is comparing x(i) to x(i)
+We wind up with f(i) = a column vector (f₁(i); ... ; fm(i))
+
+Using an SVM:
+Hypothesis, given x, compute features f
+We will have m landmarks plus f₀ = 1
+    Predict y = 1 if θ'f ≥ 0
+For training, we use the same cost function, but replace x(i) with f(i)
+This gives us θ for our SVM
+Interestingly, in this case we wind up m = n
+
+We can calculate our Σθⱼ² as θ'θ
+    Remember to ignore θ₀
+We often wind up using something slightly different version:
+    θ'Mθ where M is a matrix supplied by the kernel to sort of rescale θ
+    This lets the SVM be more efficient with larger training sets
+Minimizing this function yourself is not recommended. There are already good algorithms for doing so
+    Use one of them!
+
+Since C is roughly 1/λ:
+    Large C →  lower bias, high variance (small λ)
+    Small C →  higher bias, low variance (large λ)
+
+For our σ² value:
+    Large σ² →  Features fᵢ vary more smoothly. Higher bias, lower variance
+    Small σ² →  Features fᵢ vary more abruptly. Lower bias, higher variance
+
+Implementing an SVM:
+Find θ using an SVM software package (like liblinear or libsvm)
+Choose C
+Choose a kernel
+    We can choose a no kernel approach ('linear kernel')
+    Produces a standard linear classifier
+    Predict y = 1 if θ'x ≥ 0
+    May work for large n, small m
+
+    We saw a Gaussian kernel in the earlier examples
+    Need to choose σ² value
+    works well for small n, large m
+    
+    These are the two most popular choices by far.
+
+When using a kernel, you may need to specify the f function
+For a Gaussian kernel, this would take the form:
+function f = kernel(x1, x2)
+    f = exp(-||x1 - x2||² / (2σ²)
+return
+When doing this, DO perform feature scaling prior to feeding features into the kernel
+Otherwise features with large value ranges will dominate the calculation
+
+Not every similarity function will produce a valid kernel
+The function must satisfy Mercer's Theorem to make sure the SVM package's optimizations run
+    correctly and do not diverge
+
+Other kernels we may see:
+Polynomial kernel:
+    k(x, l) = (x'l)² = (x'l + 0)²
+            = (x'l)³ = (x'l + 0)³
+            = (x'l + 1)³
+            = (x'l + 5)⁴
+    has two parameters, the scalar value you add and the power
+    almost always performs worse than the Gaussian kernel
+ 
+More esoteric kernels:
+    string
+    chi-square
+    histogram intersection
+
+What about multiclass sets?
+Many SVM packages do it for you. yay!
+Otherwise we can use the one-vs-all method
+    Train k SVMs, one to distinguish each class
+    Get θ1 through θk
+    pick the class i with the largest θi'x
+
+When to use SVM vs logres
+let n = number of features, m = number of training examples
+If n is large relative to m go with logres
+    n = 10,000 and m < 1,000
+    spam filtering
+If n is small and m is intermediate use SVM with Gaussian kernel
+    n < 1000
+    m = 1000 - 10,000 (less than 1M at any rate)
+If n is small and m is large try to create or add more features
+    Then use logres or SVM with no kernel (a.k.a. with a linear kernel)
+    n < 1000
+    m > 50,000
+
+A neural network will likely work well for any of these regimes, but may be slower to train
+Note that the minimization problem for SVMs is a convex problem so you are guaranteed to find
+    the global minimum
+
+Honestly, your choice of data and features are likely to be more impactful than your choice of
+    algorithm.
+
+
