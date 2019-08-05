@@ -1,0 +1,94 @@
+Dimensionality reduction:
+    Say we have two features, the length in inches and the length in cm
+    These are essentially redundant 
+    Even when the features are not redundant, they may be highly correlated
+    If we can plot a line that fits these two features, we can now use a single value to represent the location on this line
+    Plot x vs y, find a line, let z be the position (projection) on that line
+
+This compression reduces memory requirements and can improve our run times
+
+Dimensionality reduction can be helpful for visualization as well
+Say we have high dimensional country data. 
+If we can summarize these (into say, country size / GDP and per-person GDP) it's easier to see relationships
+
+Principle Component Analysis
+PCA tries to find a lower dimensional surface onto which to project the data that minimizes the projection error
+Find k vectors u(1), u(2), ..., u(k) onto which to project the data
+    Really projecting the data into the linear subspace defined by these vectors
+
+Despite superficial similarities, PCA has nothing to do with logistic regression
+    Orthogonal vs vertical distances
+    Logres tries to predict some Y, PCA makes has no special variable
+
+PCA Algorithm for a training set x(1), x(2), ..., x(m):
+    Preprocess the data:
+        feature scaling/mean normalization
+        μ(j) = 1/m * Σxj(i)
+        Replace each xj(i) with xj - uj
+            This gives us a mean of 0
+        If different features on different scales (like size of house and number of bedrooms) scale features to have comparable value ranges
+            xj(i) = (xj(i) - μj) / sj where sj is some measure of the range of values: max - min or more commonly std dev
+
+    Reduce data from n dimensions to k dimensions:
+        Compute covariance matrix Σ = 1/m * Σx(i) * x(i)'  (Using sigma won't be at all confusing...)
+            Since x(i) is nx1, x(i)' is 1xn, so Σ is nxn
+            Vectorized version: Sigma = 1/m * X' * X
+        Compute eigenvectors of matrix Σ
+        in Octave: [U, S, V] = svd(Sigma) (singular value decomposition function)
+            eig(Sigma) will work as well
+            True because the covariant matrix is symmetric positive definite
+        The columns of the U matrix will be the vectors that we want.
+        Just take the first k vectors, giving us an nxk matrix Ureduce
+            Ureduce = U(:, 1:k)
+        set z Ureduce' * x
+            kxn * nx1 = kx1
+    
+Reconstruction from Compressed Representation
+    We can't get it back exactly, but we can find xapprox(i) = Ureduce * z(i)
+
+How to choose k, the number of principal components:
+PCA tries to minimize the squared projection error err = 1/m * Σ||x(i) - xapprox(i)||²
+total variation in the data var = 1/m * Σ ||x(i)||²
+Typically, we choose k to be the smallest value such that err/var ≤ 0.01 (a.k.a. 1%)
+    Σ||x(i) - xapprox(i)||²  /  Σ||x(i)||² ≤ 0.01 
+    "99% variance is retrained"
+    95 to 99 percent is the most common range
+
+We can just iterate starting at k = 1 and checking our ratio until we get an err/var ≤ 0.01
+This is horribly inefficient
+Fortunately our [U, S, V] set can simplify this
+S is an nxn diagonal matrix
+For a given value of k, our ratio can be computed as 1 - (sum of S(ii) from 1 to k / sum of S(ii) from 1 to n)
+    Which is to say 1 - (sum of first k diagonal elements / sum of all diagonal elements)
+Essentially we need Sratio ≥ 0.99 in order to retain 99% of the variance
+
+Applying PCA:
+Consider a supervised learning problem with x(i) having 10,000 features
+Our training set is (x(1), y(1)), (x(2), y(2)), ... (x(m), y(m))
+We extract the inputs, giving us an unlabeled dataset
+Apply PCA to create z1, z2, ..., z(m) where z(i) has 1,000 features
+Our new training set is (z1, y1), (z2, y2), ... (zm, ym)
+This can massively improve our training time
+
+PCA defines a mapping from x to z, which should be defined by running PCA on the training set
+Once the mapping is defined, we can apply it to the CV and test sets
+
+One frequent misuse of PCA: Prevention of overfitting
+Rationale: reduce features, less chance of overfitting!
+Might actually work, but regularization is much better
+    PCA throws away some dimensions of data without knowing what y is
+
+Another bad idea:
+    Design:
+        Get training set
+        Run PCA
+        Train logres on z,y set
+        Test on test set
+
+    Try it without PCA first!
+    Only include PCA if you need the compression/speed improvement
+
+
+
+        
+        

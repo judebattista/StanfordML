@@ -1,0 +1,76 @@
+Unsupervised Learning
+    Ask algorithm to find patterns in data
+
+Clustering:
+    Market segmentation
+    Social network analysis
+    Organize computing clusters
+    Astronomical data analysis
+
+K-means algorithm: most popular clustering algorithm
+    k is the number of clusters
+    Randomly initialize two points as cluster centroids
+    Iterate:
+        Assign each data point to one of the centroids based on distance
+        Move each centroid to the center of the points which belong to it
+        Stop when it converges
+    Inputs:
+        k - number of clusters
+        training set - {x1, x2, ..., xm}
+        xi is n dimensional, by convention we drop x0 = 1
+
+    Algorithm:
+        initialize centroids u1, u2, ..., uk
+        for i = 1 to m:
+            c(i) := index (from 1 to k) of cluster centroid closest to x(i)
+            // minimize ||xi - u||
+            //c(i) is the number of the centroid closest to x(i)
+        for bar = 1 to k:
+            ubar := average (mean) of points assigned to cluster bar 
+            // if cluster 2 has x1, x5, x6, x10 this is the same as saying c1 = c5 = c6 = c10 = 2
+            // Then u2 = 1/4 [x1 + x5 + x6 + x10]
+            // Note that this makes u2 an n dimensional vector, just like any of the x vectors
+    If we wind up with no points in a centroid, we often eliminate it, leaving us with k-1 centroids (clusters)
+        If we really need k centroids, we may randomly reinitialize it instead
+
+    Can use k-means on non-separated datasets as well.
+        Consider t-shirt sizes as a function of weight vs height
+        Example of market segmentation
+
+
+Optimization Objective for K-means
+    We track c(i) and uk (K is the number of means, k is the index into the set 1 through K)
+    uc(i) is the cluster centroid to which x(i) has been assigned
+    J(c(1), c(2), ..., c(m)) = 1/m * Σ||x(i) - uc(i)||²
+    As before, we need to minimize
+    J is sometimes called the distortion of a step
+
+Initializing centroids for K-means
+    Should have K < m
+    Randomly pick K training examples
+    Set u1 ... uK equal to these examples
+
+Depending on initial choices, K-means can arrive at different solutions
+How to avoid local optima for J?
+We can try multiple random initializations
+    Keep the one with the lowest final cost
+    Works well for k in the 2-10 range
+For larger values of k, your first initialization should give you a good result - less likely to find local optima as k increases
+
+Choosing K:
+Most common method is to choose it manually after inspecting data
+If the data is truly ambiguous there are some things we can do
+
+Elbow method:
+    Run K-means with a variable value for K (1 through some upper limit)
+    Look for a clear elbow in the plot of K vs J
+    Often does not have a clear elbow
+
+Alternatively:
+    Assuming we are running K-means for some downstream purpose
+    Evaluate K-means based on a metric for how well it performs for that later purpose
+    2 clusters is a bad choice for T-shirt sizes
+    4 or 5 make more sense
+
+
+
