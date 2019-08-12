@@ -40,20 +40,31 @@ Theta_grad = zeros(size(Theta));
 %                     partial derivatives w.r.t. to each element of Theta
 %
 
+Jmatrix = (X*Theta' - Y);
+Jmsq = Jmatrix .^ 2;
+%S = R + 1;
+%J = accumarray(S(:), Jmatrix(:))(2) / 2;
+% Note: The above works, but can be done more simply by using R as an index into Jmatrix in the sum.
+% Found at the MathWorks documentaion site:
+% https://www.mathworks.com/help/matlab/matlab_prog/find-array-elements-that-meet-a-condition.html
+logicalR = R == 1;
+J = sum(Jmsq(logicalR));
 
+% Regularize the cost:
+costReg = lambda * sum(Theta(:) .^ 2) + lambda * sum(X(:) .^ 2);
+costReg;
+J += costReg;
+J /= 2;
 
-
-
-
-
-
-
-
-
-
-
-
-
+% Calulate the gradients:
+%X_grad = ((X*Theta' - Y) .* R) * Theta;
+%Theta_grad = (Jmatrix .* R)' * X; % Transposing inline does not work
+% So, let's create a temporary variable
+goodDelta = Jmatrix .* R;
+X_grad = goodDelta * Theta + lambda * X;
+% ... and transpose the temporary variable.
+Theta_grad = goodDelta' * X + lambda * Theta;
+% ... and that works. Same code, different lines! Go figure
 
 % =============================================================
 

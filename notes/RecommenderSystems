@@ -1,0 +1,185 @@
+Motivation: Recommend new products to use
+Picking features is generally important. In this case, the algorithm learns the 
+    optimal set of features.
+
+Running example: Predicting movie ratings using a 0 to 5 star rating
+Movies:             Alice   Bob     Carol   Dave
+Love at Last:       5       5       0       0
+Romance Forever:    5       ?       ?       0
+Cute Puppies of Love ?      4       0       ?
+Nonstop Car Chases  0       0       5       4
+Swords vs. Karate:  0       0       5       ?
+
+Notation:
+nu = number of users
+nm = number of movies
+r(i, j) = 1 if user j has rated movie i
+y(i, j) = rating given to movie i by user j
+            (defined iff r(i, j) = 1)
+
+With a more realistic data set, r will be quite sparse
+
+First approach: Content based recommendations
+Let's say each movie has two features:
+    x1 = how romantic it is
+    x2 = how mouch action is has
+
+We update our table to include the new information:
+Movies:             Alice   Bob     Carol   Dave    romance action
+Love at Last:       5       5       0       0       0.9     0.0
+Romance Forever:    5       ?       ?       0       1.0     0.01
+Cute Puppies of Love ?      4       0       ?       0.99    0
+Nonstop Car Chases  0       0       5       4       0.1     1.0
+Swords vs. Karate:  0       0       5       ?       0       0.9
+
+So for any movie we can create a feature vector, which we will start with x0 = 1
+x(1) = [1; 0.9; 0]
+x(2) = [1; 1.0; 0.01]
+etc
+
+Note that n is two here, not three. We do not count the x0 feature
+We can treat each user as an individual linear regression problem
+    For each user learn θj (in R³). Predict user j as rating movie i using:
+    rating = θj' * xi
+
+More formally:
+    
+r(i, j) = 1 if user j has rated movie i
+y(i, j) = rating given to movie i by user j (defined iff r(i, j) = 1)
+θ(j) = parameter vector for user j
+x(i) = feature vector for movie i
+m(j) = number of movies rated by user j
+For user j, movie i, the predicted rating is θj' * xi
+To learn θj:
+    choose a θj that minimizes our cost function
+        1/2m(j) * Σ((θj' * xi) - y(i, j))² (sum over all movies user j has rated)
+    Note that this is just least squares error, just like normal linear regression
+    Speaking of which we can include a normalization term:
+        1 / 2m(j) * Σ((θj' * xi) - y(i, j))² + λ/2m(j) * Σθj²
+        As usual, note that the bias term summation goes from 1 to n, not 0 to n
+    In practice, we usually multiply the cost function through by m(j):
+        1/2 * Σ((θj' * xi) - y(i, j))² + λ/2 * Σθj²
+    Really, we should just multiply through by 2 as well to give us:
+        Σ((θj' * xi) - y(i, j))² + λ * Σθj²
+
+To learn θ over all users we just throw an extra sum on each term going from j=1 to nu
+    Σ(over j) Σ(over i)((θj' * xi) - y(i, j))² + λ * Σ(over j)Σ(over k)θj²
+
+To minimize θ, we can use gradient descent:
+θjk := θjk - α * Σ(θj' * xi - y(i,j))*xik for k = 0
+θjk := θjk - α * Σ(θj' * xi - y(i,j))*xik + λθjk for k ≠ 0
+
+Collaborative Filtering:
+Say we don't know how romantic or action-packed a movie is, but we DO know how each 
+    user rates movies (that is, we know θ)
+Now, given Θ and the ratings for movies, we can infer the romance and action values
+Now instead of choosing θ to minimize our cost function, we choose xi to minimize it
+We can use the same cost function as above:
+    Σ((θj' * xi) - y(i, j))² + λ * Σθj²
+Then we can just sum over all the movies to get the x dataset
+    Σ(over i) Σ(over j)((θj' * xi) - y(i, j))² + λ * Σ(over i)Σ(over k)θj²
+
+So, if we know θ, we can find x and vice-versa
+Initially, we can take a random guess at θ, use it to find x, use that to find
+    a better θ, and iterate
+    Stop when our error gets low enough
+
+There is a more efficient method:
+We can combine the cost functions and choose x, θ to minimize the whole thing
+J(x, θ) = 1/2 * Σ((θj)'xi - y(i, j))² + λ/2 * ΣΣ(xik)² + λ/2 * ΣΣ(θjk)²
+Σ((θj)'xi - y(i, j))² is summed over the (i, j) pairs such that r(i, j) = 1
+ΣΣ(xik)² is summed over i and k
+ΣΣ(θjk)² is summed over j and k
+
+Note that we no longer have x0 and θ0, so x and θ are in Rn
+Collaborative filtering algorithm:
+1.  Initialize x and θ to small values
+2.  Minimize J using gradient descent (or an advanced optimization algorithm)
+    Update steps:
+    xik := xik - α * (Σθj'xi - y(i, j)*θjk + λxik) 
+    ΘJk := θjk - α * (Σθj'xi - y(i, j)*xik + λθjk)
+3. For a user with params θ and a movie with learned features x, predict a rating using:
+    θ'x
+
+Sure would be nice to vectorize this problem...
+Low Rank Matrix Factorization
+We can rewrite our movie data as follows:
+Movies:             Alice   Bob     Carol   Dave
+Love at Last:       5       5       0       0
+Romance Forever:    5       ?       ?       0
+Cute Puppies of Love ?      4       0       ?
+Nonstop Car Chases  0       0       5       4
+Swords vs. Karate:  0       0       5       ?
+
+Becomes:
+    5   5   0   0
+Y = 5   ?   ?   0
+    ?   4   0   ?
+    0   0   5   4
+    0   0   5   0
+
+Our predicted ratings can also be written as a matrix:
+        θ1'x1   θ2'x1   θ3'x1   ...
+P =     θ1'x2   θ2'x2   θ3'x2   ...
+        ...     ...     ...     ...
+
+And so on.
+
+Now we can create x =   - x1' -
+                        - x2' -
+                        - x3' -
+                        ... 
+
+Then θ becomes θ =      - θ1' -
+                        - θ2' -
+                        - θ3' -
+                        ...
+
+This is low rank matrix factorization
+xθ' is a Low Rank Matrix
+
+Since we have learned a feature vector for any given movie, we can now find related movies
+How do we find movies j related to movie i?
+Calculate ||xi - xj||. 
+The smaller it is, the more closely related they are
+
+What is we have a fifth user, Eve, who has not rated any movies?
+    5   5   0   0   ?
+Y = 5   ?   ?   0   ?
+    ?   4   0   ?   ?
+    0   0   5   4   ?
+    0   0   5   0   ?
+
+Our algorithm will learn a θ5 that has no basis in reality
+The regularization term encourages us to set θ5 to zero
+Since we have no data to offset this, θ5 will always be zeros
+In turn, this makes all the predicted ratings 0
+This is not helpful
+Not only does it skew ourr predictions, but it also prevents us from recommending
+    anything but the lowest rated movies to Eve!
+
+Mean normalization can fix this
+If we create a mean vector, μ, that holds the mean rating for every movie, we can use
+    this as our default rating set
+Now, for every movie, we subtract the mean rating
+For our example, the mean vector is:
+    2.5
+    2.5
+μ = 2
+    2.25
+    1.25
+
+Our modified Y becomes:
+    2.5     2.5     -2.5    -2.5    ?    
+Y = 2.5     ?       ?       -2.5    ?
+    ?       2       -2      ?       ?
+    -2.25   -2.25   2.75    2.75    ?
+    -1.25   -1.25   3.75    -1.25   ?
+
+Now each move has an average rating of zero (within rounding error)
+We can use this new set of ratings with our algorithm to learn θj and xi
+Predict: θj'xi + μi to reecalibrate the ratings
+Now, with Eve's non-existant ratings generating θ5 = 0, our prediction for her is μ
+This is much more reasonable
+
+
