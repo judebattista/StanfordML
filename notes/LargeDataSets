@@ -1,0 +1,144 @@
+Data can be more important than algorithm
+Large datasets bring their own problems
+Say m = 100,000,000 = 100M
+Consider a simple gradient descent algorithm
+    θj = θj - α/m Σ(h(xi) - y)xij
+    Note that this sum as m = 100M terms
+Why not just choose 1,000 out of our 100M examples?
+    Can be a useful sanity check
+    We can plot Jtrain and Jcv as a function of m and see how it behaves
+    If we see high variance at low m, this implies more data will be helpful
+        Jcv is high with exponential decrease
+        Jtrain is low with fractional exponential increase
+        Gap between them
+    If we see little to no gap between Jcv and Jtrain, this implies high bias
+        Adding more data is probably not the answer
+        Consider using more features instead
+
+Stochastic Gradient Descent:
+Gradient descent is expensive for large data sets
+    h(x) = Σθj*xj
+    Jtrain(θ) = 1/2m * Σ(h(xi) - yi)²
+    At each step of gradient descent, we update θ
+        θj = θj - α/m Σ(h(xi) - y)xij
+        (for j = 0 to n, sum over 1 to m)
+    For large m, this derivative term is expensive to compute since we sum over m
+This version is Batch Gradient Descent
+    Looks at all training examples
+    For large m, requires streaming training data through the memory since the machine
+        is unlikely to be able to hold all the data in memory
+        This is for just a single step!
+    
+For Stochastic Gradient Descent we use the following:
+    cost(θ, (xi, yi)) = 1/2 * (h(xi) - yi)²
+    Jtrain(θ) = 1/m * Σ cost(θ, (xi, yi))
+        (sum over m)
+1. Randomly shuffle the dataset
+2. Repeat:  ← 1 to 10 times depending on dataset
+    for i = 1 to m:
+        θj = θj - α*(h(xi) - yi)*xij
+            (for j = 0 to n)
+    No summation: takes a small gradient descent step using a single example from the 
+        training set, then repeats with another example.
+
+Unlike BGD, SGD can step in the wrong decision. It doesn't converge absolutely, but
+    wanders around in a region around the global minimum
+We repeat this inner for loop anywhere from 1-10 times
+
+Mini Batch Gradient Descent:
+    BGC uses all m examples in each iteration
+    SGD uses a single example in each iteration
+    MBGD uses b examples in each iteration
+        b is a variable called the mini-batch size
+        tends to range from 2 to 100, 10 is a fairly typical size
+Say b = 10, then
+    Repeat:  ← 1 to 10 times depending on dataset
+        for i = 1, 11, 21, 31, ... m:
+            θj = θj - α/b * Σ(h(xi) - yi)*xij (sum from i to i+b-1)
+                (for j = 0 to n)
+Offers a substantial performance boost when you have a good vectorized implementation
+Since b is small, the summation step can be done with a vectorized version
+    This partially parallelizes the computation (with a good linear algebra library)
+
+SGD Convergence:
+When we checked BGD for convergence, we plotted Jtrain vs the number of iterations
+This involved summing n terms (as shown above)
+For SGD, cost = 1/2 * (h(xi) - yi)²
+During learning, we compute the cost before updating θ using xi, yi
+This gives us the cost for that example
+We compute it prior to adjusting θ, since the adjustment uses the xi, yi pair and so
+    is 'trained' to that pair
+Every x (say 1000) iterations, we plot the cost averaged over those x examples.
+If the plot is inclonclusive, try increasing x
+If the plot is increasing, this indicates divergence: try a smaller α
+
+If we need to find the global minimum, we can decrease α over time
+    α = const1/(iterationNumber + const2)
+    This does make the algorithm more finicky since you have to choose const1 and 2
+
+Online Learning
+Uses a continuous stream of data
+Say we have a shipping service, each user either uses (y=1) or does not use (y=0)
+    the service. 
+For a given origin and destination, we offer a price
+We want to optimize the price
+    learn p(y=1|x;θ)
+    Logistic regression seems like a natural choice
+
+Algorithm:
+Repeat forever
+    Get (x,y) corresponding to user
+        x is the price, y is their choice to use or not use the service
+    Update θ using (x, y):
+       θj := θj - α*(h(x) - y)*xj for (j=0, ..., n)
+Note that there is no iteration through a training set (no xi, yi)
+We just look at one example at a time, much like SGD
+This does assume a large number of users. For smaller user counts, you might want to 
+    use a standard logistic regression over an accumulated data set
+Online learning allows the algorithm to adapt to changing user preferences.
+
+Another example: Product search
+Say we run an online store that sells phones
+A user searches for "Android phone 1080p camera"
+We have 100 phones in the store and want to return 10 results
+For each phone we create a feature vector x:
+    features of phone
+    how many words in the query match the name of the phone
+    how many words in the query match the description of the phone
+    etc
+y = 1 if the user clicks on the link, 0 if they do not
+We want to learn p(y=1|x;θ) (this the predicted click through rate or CTR)
+We want to show the 10 phones with the highest predicted CTR
+Every time a user queries, we get 10 training examples
+This sort of problem is a good fit for online learning
+
+Note that either of these examples could be done with standard machine learning.
+Just run the website for a few days, accumulate a training set, and apply the ML
+    technique of your choice.
+Online learning does permit more rapid response times and greater flexibility
+
+Map Reduce and Data Parallelism:
+Some datasets are just too large for one machine to handle
+
+Say we have a BGD problem with m = 400 (realistically would be more like 400M)
+Using BGD: θj = θj - α/m Σ(h(xi) - y)xij
+Say we have four machines to run our dataset
+Machine 1 uses (x1, y1) to (x100, y100), the first quarter of our dataset to compute t1
+Machine 2 uses 101-200 for t2
+Machine 3 uses 201-300 for t3
+Machine 4 uses 301-400 for t4
+
+Now the master server computes θj := θj - α/m * (t1 + t2 + t3 + t4)
+Map: split the dataset over multiple machines
+Reduce: combine the results from each machine
+
+Before we employ Map Reduce, we need to discover whether the algorithm can be expressed as computing the sums of functions over the training set
+Ex: for advanced optimization with logistic regression, we need:
+    Jtrain = -1/m * Σ(yi*log h(xi) - (1-yi)*log(i-h(xi)))
+    δJtrain/δθj = 1/m * Σ(h(xi) - yi)*xij
+Since both terms involve summing over the dataset, this is a potential candidate for Map Reduce
+
+Multicore machines allow us to process data in parallel as well
+Many linear algebra libraries automatically parallelize operations
+    A good vectorized implementation will then automatically benefit from this
+
